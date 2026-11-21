@@ -21,6 +21,11 @@ const INPUT_DIR = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
 const cases = JSON.parse(readFileSync(join(INPUT_DIR, 'cases.json'), 'utf8')) as { id: string; input: unknown }[];
-const answers: unknown[] = [];
-for (const c of cases) answers.push(run(c.input));
-writeFileSync(join(OUTPUT_DIR, 'answers.json'), JSON.stringify(answers));
+// Stringify each answer as it is produced and join the pieces: the bytes
+// are exactly JSON.stringify(answers), but the whole answers array is never
+// held in memory at once (the graded sets run to tens of megabytes).
+// The ?? 'null' keeps the one case array stringify would map to null
+// (an undefined answer) identical.
+const parts: string[] = [];
+for (const c of cases) parts.push(JSON.stringify(run(c.input)) ?? 'null');
+writeFileSync(join(OUTPUT_DIR, 'answers.json'), `[${parts.join(',')}]`);
